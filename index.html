@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UGS Files</title>
+<style>
+:root {
+  --bg: #131418;
+  --panel: #181a1f;
+  --panel-hi: #1f2229;
+  --border: #262932;
+  --border-hi: #3a3f4b;
+  --text: #e8e7e4;
+  --text-dim: #8d9199;
+  --text-faint: #5a5e66;
+  --accent: #d6a35c;
+  --accent-soft: rgba(214,163,92,.13);
+  --accent-line: rgba(214,163,92,.3);
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------------- sidebar ---------------- */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 72px;
+  padding: 16px 10px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+.sidebar-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 0;
+  cursor: pointer;
+  transition: background-color .12s, color .12s, border-color .12s;
+}
+.sidebar-btn:hover {
+  background: var(--panel-hi);
+  color: var(--text);
+  border-color: var(--border);
+}
+.sidebar-btn.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+.sidebar-btn.empty {
+  color: var(--text-faint);
+  opacity: .38;
+  pointer-events: none;
+}
+
+/* ---------------- main ---------------- */
+.main {
+  margin-left: 72px;
+  padding: 56px 32px 80px;
+}
+.wrap { max-width: 820px; margin: 0 auto; }
+
+header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -.015em;
+  margin: 0 0 6px;
+}
+.tagline {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  margin: 0 0 32px;
+}
+.tagline a {
+  color: var(--text);
+  border-bottom: 1px solid var(--border-hi);
+}
+.tagline a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.search-wrap { position: relative; margin-bottom: 44px; }
+#searchInput {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: 14px/1 var(--sans);
+  padding: 13px 44px 13px 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+#searchInput::placeholder { color: var(--text-faint); }
+#searchInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.search-clear:hover { color: var(--text); background: var(--border); }
+.search-clear.show { display: flex; }
+
+/* ---------------- sections ---------------- */
+.letter-section { margin-bottom: 40px; }
+.letter-section.filtered-out { display: none; }
+
+.letter-header {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ug-count {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-btn {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 13.5px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color .12s, color .12s, border-color .12s;
+}
+.game-btn:hover {
+  background: var(--panel-hi);
+  color: var(--text);
+  border-color: var(--border-hi);
+}
+.game-btn:active { background: var(--border); }
+.game-btn.is-hidden { display: none; }
+
+/* ---------------- no results ---------------- */
+.no-results {
+  display: none;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+.no-results.show { display: block; }
+.no-results strong { color: var(--text); font-weight: 500; }
+
+/* ---------------- loading / retry ---------------- */
+.loading {
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 16px 0;
+}
+.retry {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin: 8px 0 0;
+  font-family: var(--mono);
+}
+.retry button {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* ---------------- footer ---------------- */
+footer {
+  margin-top: 72px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+footer a { color: var(--text-dim); }
+footer a:hover { color: var(--accent); text-decoration: none; }
+
+/* ---------------- mobile ---------------- */
+@media (max-width: 720px) {
+  .sidebar { width: 54px; padding: 12px 6px; gap: 2px; }
+  .sidebar-btn { font-size: 11px; padding: 6px 0; }
+  .main { margin-left: 54px; padding: 32px 16px 60px; }
+  header h1 { font-size: 22px; }
+  .game-btn { font-size: 13px; padding: 11px 14px; }
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar" aria-label="Alphabet index"></aside>
+
+<main class="main">
+  <div class="wrap">
+    <header>
+      <h1>UGS Files</h1>
+      <p class="tagline">
+        Files from the
+        <a href="https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/" target="_blank" rel="noopener">Ultimate Game Stash Google Doc</a>
+        · Discord
+        <a href="https://discord.gg/rmVsAqkpkA" target="_blank" rel="noopener">rmVsAqkpkA</a>
+      </p>
+
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Search files…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search files">
+        <button class="search-clear" id="searchClear" type="button" aria-label="Clear search">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="loading" id="loading">Loading index…</div>
+    <p class="retry" id="retryLine">Not loading? <button id="retryBtn" type="button">Retry</button></p>
+
+    <p class="no-results" id="noResults">
+      No files match <strong id="noResultsQuery"></strong>.
+    </p>
+
+    <div id="sections-container"></div>
+
+    <footer>
+      <span>UGS · personal index</span>
+      <span><a href="#" id="backToTop">Back to top</a></span>
+    </footer>
+  </div>
+</main>
+
+<!-- Load games.js and searchbut.js from the CDN, same as the original -->
+<script src="https://cdn.jsdelivr.net/npm/ugs-singlefiles@1.0.2/searchbut.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ugs-singlefiles@1.0.2/games.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var sidebar        = $('sidebar');
+  var container      = $('sections-container');
+  var searchInput    = $('searchInput');
+  var searchClear    = $('searchClear');
+  var noResults      = $('noResults');
+  var noResultsQ     = $('noResultsQuery');
+  var loading        = $('loading');
+  var retryLine      = $('retryLine');
+  var retryBtn       = $('retryBtn');
+  var backToTop      = $('backToTop');
+
+  /* ============================================================
+     YOUR OWN GAMES — add more here any time.
+     `file` is the html file in this same directory.
+     `letter` picks which section it drops into.
+     ============================================================ */
+  var CUSTOM = [
+    { name: 'CS:GO Clicker', file: 'csgoclickerupd', letter: 'C' }
+  ];
+
+  /* ============================================================
+     helpers
+     ============================================================ */
+  function stripCL(name) {
+    // lowercase "cl" only at position 0
+    return name.replace(/^cl/, '');
+  }
+
+  function normalise(s) {
+    // lowercase, keep only a-z0-9 — so "Retro Bowl" === "retrobowl"
+    return String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  /* ============================================================
+     process — runs after games.js has built the sections.
+     It:
+       1. strips "cl" from every button label
+       2. adds a count badge to each letter header
+       3. builds the sidebar
+       4. injects custom games
+       5. re-runs the active filter
+     It's idempotent: safe to call repeatedly.
+     ============================================================ */
+  var sections = [];
+  var total = 0;
+  var booted = false;
+  var moTimer;
+
+  function process() {
+    // 1. strip CL from every button
+    var gameBtns = container.querySelectorAll('input[type="button"]');
+    for (var i = 0; i < gameBtns.length; i++) {
+      var b = gameBtns[i];
+      var clean = stripCL(b.value);
+      if (clean !== b.value) {
+        b.dataset.fullName = b.value;
+        b.value = clean;
+      }
+      if (!b.title) b.title = b.value;
+      b.classList.add('game-btn');
+    }
+
+    // 2. inject custom games (once)
+    injectCustomGames();
+
+    // 3. decorate letter headers with a count
+    sections = [];
+    var sectionEls = container.querySelectorAll('.letter-section');
+    for (var s = 0; s < sectionEls.length; s++) {
+      var sec = sectionEls[s];
+      sections.push(sec);
+      var header = sec.querySelector('.letter-header');
+      var rows = sec.querySelectorAll('input[type="button"]').length;
+      total += rows;
+
+      if (header) {
+        var tag = header.querySelector('.ug-count');
+        if (!tag) {
+          tag = document.createElement('span');
+          tag.className = 'ug-count';
+          header.appendChild(tag);
+        }
+        var txt = rows ? String(rows).padStart(2, '0') : '—';
+        if (tag.textContent !== txt) tag.textContent = txt;
+      }
+    }
+
+    // 4. sidebar (built once)
+    if (!sidebar.children.length) buildSidebar();
+    updateSidebarState();
+
+    // 5. hide the loading state
+    if (container.children.length && !booted) {
+      booted = true;
+      if (loading) loading.style.display = 'none';
+      if (retryLine) retryLine.style.display = 'none';
+    }
+
+    // 6. re-run the active filter against the fresh DOM
+    applyFilter();
+  }
+
+  /* ============================================================
+     inject custom games
+     ============================================================ */
+  function injectCustomGames() {
+    for (var g = 0; g < CUSTOM.length; g++) {
+      var game = CUSTOM[g];
+
+      if (hasButton(game.name)) continue;
+
+      var section = null;
+      var all = container.querySelectorAll('.letter-section');
+      for (var i = 0; i < all.length; i++) {
+        var h = all[i].querySelector('.letter-header');
+        if (!h) continue;
+        var first = h.textContent.trim().charAt(0).toUpperCase();
+        if (first === game.letter) { section = all[i]; break; }
+      }
+
+      if (!section) {
+        section = document.createElement('div');
+        section.className = 'letter-section';
+        section.dataset.letter = game.letter;
+
+        var newHeader = document.createElement('div');
+        newHeader.className = 'letter-header';
+        newHeader.textContent = game.letter;
+
+        var newBucket = document.createElement('div');
+        newBucket.className = 'buttons-container';
+
+        section.appendChild(newHeader);
+        section.appendChild(newBucket);
+        container.appendChild(section);
+      }
+
+      var bucket = section.querySelector('.buttons-container');
+      if (!bucket) continue;
+
+      var btn = document.createElement('input');
+      btn.type = 'button';
+      btn.value = game.name;
+      btn.title = game.name;
+      btn.className = 'game-btn';
+      btn.addEventListener('click', (function (href) {
+        return function () { window.open(href + '.html', '_blank', 'noopener'); };
+      })(game.file));
+      bucket.appendChild(btn);
+    }
+  }
+
+  function hasButton(name) {
+    var all = container.querySelectorAll('input[type="button"]');
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].value === name) return true;
+    }
+    return false;
+  }
+
+  /* ============================================================
+     sidebar
+     ============================================================ */
+  function buildSidebar() {
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    for (var i = 0; i < letters.length; i++) {
+      (function (L) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sidebar-btn';
+        btn.textContent = L;
+        btn.dataset.letter = L;
+        btn.addEventListener('click', function () { jumpTo(L); });
+        sidebar.appendChild(btn);
+      })(letters[i]);
+    }
+  }
+
+  function updateSidebarState() {
+    var present = {};
+    var all = container.querySelectorAll('.letter-section');
+    for (var i = 0; i < all.length; i++) {
+      var h = all[i].querySelector('.letter-header');
+      if (!h) continue;
+      var first = h.textContent.trim().charAt(0).toUpperCase();
+      if (first) present[first] = true;
+    }
+    var btns = sidebar.querySelectorAll('.sidebar-btn');
+    for (var j = 0; j < btns.length; j++) {
+      var L = btns[j].textContent;
+      btns[j].classList.toggle('empty', !present[L]);
+    }
+  }
+
+  function jumpTo(letter) {
+    var target = null;
+    var all = container.querySelectorAll('.letter-section');
+    for (var i = 0; i < all.length; i++) {
+      var h = all[i].querySelector('.letter-header');
+      if (!h) continue;
+      if (h.textContent.trim().charAt(0).toUpperCase() === letter) {
+        target = all[i];
+        break;
+      }
+    }
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      highlightSidebar(letter);
+    }
+  }
+
+  function highlightSidebar(letter) {
+    var btns = sidebar.querySelectorAll('.sidebar-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('is-active', btns[i].textContent === letter);
+    }
+  }
+
+  /* ============================================================
+     search — reads the input fresh every single time.
+     That means backspace, delete, paste, select-all-then-type
+     all just work. No accumulating buffer.
+     ============================================================ */
+  var filterTimer;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(applyFilter, 90);
+  });
+
+  searchClear.addEventListener('click', function () {
+    searchInput.value = '';
+    applyFilter();
+    searchInput.focus();
+  });
+
+  function applyFilter() {
+    var raw = searchInput.value;
+    var q = normalise(raw);
+
+    searchClear.classList.toggle('show', raw.length > 0);
+
+    if (!q) {
+      var all = container.querySelectorAll('input[type="button"]');
+      for (var i = 0; i < all.length; i++) all[i].classList.remove('is-hidden');
+      for (var s = 0; s < sections.length; s++) {
+        sections[s].classList.remove('filtered-out');
+      }
+      noResults.classList.remove('show');
+      return;
+    }
+
+    var visibleTotal = 0;
+
+    for (var si = 0; si < sections.length; si++) {
+      var sec = sections[si];
+      var rows = sec.querySelectorAll('input[type="button"]');
+      var visibleHere = 0;
+      for (var r = 0; r < rows.length; r++) {
+        var match = normalise(rows[r].value).indexOf(q) !== -1;
+        rows[r].classList.toggle('is-hidden', !match);
+        if (match) visibleHere++;
+      }
+      sec.classList.toggle('filtered-out', visibleHere === 0);
+      visibleTotal += visibleHere;
+    }
+
+    if (visibleTotal === 0) {
+      noResults.classList.add('show');
+      noResultsQ.textContent = raw.trim();
+    } else {
+      noResults.classList.remove('show');
+    }
+  }
+
+  /* ============================================================
+     keyboard shortcuts
+     ============================================================ */
+  document.addEventListener('keydown', function (e) {
+    var tag = document.activeElement && document.activeElement.tagName;
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA';
+
+    if (e.key === '/' && !typing) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+      return;
+    }
+    if (e.key === 'Escape' && document.activeElement === searchInput) {
+      searchInput.value = '';
+      applyFilter();
+      searchInput.blur();
+    }
+  });
+
+  /* ============================================================
+     retry + back to top
+     ============================================================ */
+  retryBtn.addEventListener('click', function () {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/ugs-singlefiles@1.0.2/games.js';
+    document.body.appendChild(s);
+  });
+
+  backToTop.addEventListener('click', function (e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ============================================================
+     watch for games.js dropping content in
+     ============================================================ */
+  new MutationObserver(function () {
+    clearTimeout(moTimer);
+    moTimer = setTimeout(process, 80);
+  }).observe(container, { childList: true, subtree: true });
+
+  /* hide the retry line a few seconds after load if nothing arrived */
+  setTimeout(function () {
+    if (!booted && loading) loading.textContent = 'Still loading — CDN may be slow.';
+  }, 7000);
+
+  /* first pass — content may already be present because games.js
+     is a synchronous <script> tag above */
+  process();
+})();
+</script>
+</body>
+</html>
