@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UGS Files</title>
+</head>
+<body>
+<script>
+fetch('https://cdn.jsdelivr.net/gh/9saa/gamewebsite@master/index.html')
+  .then(function (r) { return r.text(); })
+  .then(function (html) {
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch(function () {
+    document.body.innerHTML =
+      '<p style="font:14px system-ui;padding:32px;color:#8d9199">' +
+      'Couldn\'t load the index. Check your connection and refresh.</p>';
+  });
+</script>
+</body>
+</html>
